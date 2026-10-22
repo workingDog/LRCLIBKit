@@ -8,21 +8,21 @@ A Swift client for the lyrics library [LRCLIB](https://lrclib.net/) "a completel
 ```swift
 import LRCLIBKit
 
-do {
-    let lyrics = try await LrcClient(trackName: "Venus", artistName: "Bananarama")
-    print(lyrics.plainLyrics ?? "No plain lyrics")
-} catch ServerError.apiError(let error) {
-    switch error.statusCode {
-        case 404: print("Lyrics not found")
-        case 429: print("Rate limit exceeded")
-        case 503: print("LRCLIB is temporarily overloaded")
-        default: print("\(error.name): \(error.message)")
-    }
-} catch ServerError.httpErrorCode(let statusCode) {
-    print("HTTP error: \(statusCode)")
-} catch {
-    print("Request failed: \(error.localizedDescription)")
-}
+        do {
+            let lyrics = try await LrcClient.get(trackName: "Venus", artistName: "Bananarama")
+            print(lyrics.plainLyrics ?? "No plain lyrics")
+        } catch ServerError.apiError(let error,  _) {
+            switch error.statusCode {
+                case 404: print("Lyrics not found")
+                case 429: print("Rate limit exceeded")
+                case 503: print("LRCLIB is temporarily overloaded")
+                default: print("\(error.name): \(error.message)")
+            }
+        } catch ServerError.httpErrorCode(let statusCode) {
+            print("HTTP error: \(statusCode)")
+        } catch {
+            print("Request failed: \(error.localizedDescription)")
+        }
 ```
 
 ### Installation
