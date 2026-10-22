@@ -101,9 +101,11 @@ public struct LrcClient {
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(lrclibID, forHTTPHeaderField: "Lrclib-App-Id")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        if let lrclibID {
+            request.setValue(lrclibID, forHTTPHeaderField: "Lrclib-App-Id")
+        }
         
         // retry ---> todo
         
