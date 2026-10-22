@@ -10,40 +10,34 @@ import Foundation
 ///
 /// see the documentations at:  https://lrclib.net/docs
 ///
-public enum LrcClient {
-    private static let baseUrl = URL(string: "https://lrclib.net/api/")!
-    
-    /// Registration is optional:
-    /// create an application in the developer portal to receive higher rate limits,
-    /// a shareable API authorization document (useful when submitting to app review),
-    /// and a way for us to contact you if your integration misbehaves.
-    ///
-    /// Client-side applications identify themselves with the public Lrclib-App-Id header.
-    /// The ID is not a secret, so it is safe to ship in a client.
-    private static let lrclibid = "uffDOEor4luWEl3ltIARG5BFdaw29uImqIKBTIHVBYY"
-    
-    private static let userAgent = "LRCLIBKit v0.1.0 (https://github.com/workingDog/LRCLIBKit)"
-    
-    /// for retry mechanics ---> todo
-    private static let session: URLSession = {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 15
-        configuration.timeoutIntervalForResource = 30
-        return URLSession(configuration: configuration)
-    }()
-    
+public struct LrcClient {
+    private let baseURL: URL
+    private let lrclibID: String?
+    private let userAgent: String
+    private let session: URLSession
+
+    public init(
+        baseURL: URL = URL(string: "https://lrclib.net/api/")!,
+        lrclibID: String? = "uffDOEor4luWEl3ltIARG5BFdaw29uImqIKBTIHVBYY",
+        userAgent: String = "LRCLIBKit v0.1.0 (https://github.com/workingDog/LRCLIBKit)",
+        session: URLSession = .shared
+    ) {
+        self.baseURL = baseURL
+        self.lrclibID = lrclibID
+        self.userAgent = userAgent
+        self.session = session
+    }
+
      /// Attempt to find the best match of lyrics for the track. You must provide the track title and the artist name. Providing the album name and the track's duration in seconds is recommended and improves the matching precision.
      /// If no match is found, the API returns 404 Not Found. Missing tracks can be picked up by the background lyrics fetching service and may become available in a later request.
      /// Note: The provided duration is crucial. LRCLIB will attempt to provide the lyrics only when the duration matches the record in LRCLIB's database, or at least with a difference of ±2 seconds in duration.
-    public static func get(
+    public func get(
         trackName: String,
         artistName: String,
         albumName: String? = nil,
         duration: UInt? = nil
     ) async throws -> LyricsRecord {
-        
         let endpoint = "get"
-        
         var queryItems = [
             URLQueryItem(name: "track_name", value: trackName),
             URLQueryItem(name: "artist_name", value: artistName)
@@ -59,14 +53,14 @@ public enum LrcClient {
     }
     
     /// Get a lyrics record by the track's absolute ID. Track IDs are returned by other APIs, such as /api/get and /api/search
-    public static func get(id: Int64) async throws -> LyricsRecord {
+    public func get(id: Int64) async throws -> LyricsRecord {
         try await request("get/\(id)")
     }
 
     /// Search for lyrics records using keywords. This API returns an array of lyrics records that match the specified search condition(s).
     /// At least ONE of the two parameters, q OR track_name, must be present. If neither is provided, an empty array is returned.
     /// Note: This API currently returns a maximum of 20 results and does not support pagination. These limitations are subject to change in the future.
-    public static func search(
+    public func search(
         query: String? = nil,
         trackName: String? = nil,
         artistName: String? = nil,
@@ -99,15 +93,15 @@ public enum LrcClient {
     }
     
     /// Server request
-    private static func request<T: Decodable>(_ endpoint: String, queryItems: [URLQueryItem] = []) async throws -> T {
+    private func request<T: Decodable>(_ endpoint: String, queryItems: [URLQueryItem] = []) async throws -> T {
         
-        let url = baseUrl
+        let url = baseURL
             .appending(path: endpoint)
             .appending(queryItems: queryItems)
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(lrclibid, forHTTPHeaderField: "Lrclib-App-Id")
+        request.setValue(lrclibID, forHTTPHeaderField: "Lrclib-App-Id")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         

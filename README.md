@@ -9,7 +9,8 @@ A Swift client for the lyrics library [LRCLIB](https://lrclib.net/) "a completel
 import LRCLIBKit
 
         do {
-            let lyrics = try await LrcClient.get(trackName: "Venus", artistName: "Bananarama")
+            let client = LrcClient()
+            let lyrics = try await client.get(trackName: "Venus", artistName: "Bananarama")
             print(lyrics.plainLyrics ?? "No plain lyrics")
         } catch ServerError.apiError(let error,  _) {
             switch error.statusCode {
