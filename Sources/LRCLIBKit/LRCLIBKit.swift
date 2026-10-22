@@ -16,7 +16,10 @@ public struct LrcClient {
     private let lrclibID: String?
     private let userAgent: String
     private let session: URLSession
-
+    
+    private let maxAttempts = 3
+    private let defaultRetryDelay: TimeInterval = 1
+    
     public init(
         baseURL: URL = URL(string: "https://lrclib.net/api/")!,
         lrclibID: String? = nil,
@@ -28,10 +31,10 @@ public struct LrcClient {
         self.userAgent = userAgent
         self.session = session
     }
-
-     /// Attempt to find the best match of lyrics for the track. You must provide the track title and the artist name. Providing the album name and the track's duration in seconds is recommended and improves the matching precision.
-     /// If no match is found, the API returns 404 Not Found. Missing tracks can be picked up by the background lyrics fetching service and may become available in a later request.
-     /// Note: The provided duration is crucial. LRCLIB will attempt to provide the lyrics only when the duration matches the record in LRCLIB's database, or at least with a difference of ±2 seconds in duration.
+    
+    /// Attempt to find the best match of lyrics for the track. You must provide the track title and the artist name. Providing the album name and the track's duration in seconds is recommended and improves the matching precision.
+    /// If no match is found, the API returns 404 Not Found. Missing tracks can be picked up by the background lyrics fetching service and may become available in a later request.
+    /// Note: The provided duration is crucial. LRCLIB will attempt to provide the lyrics only when the duration matches the record in LRCLIB's database, or at least with a difference of ±2 seconds in duration.
     public func get(
         trackName: String,
         artistName: String,
@@ -58,7 +61,7 @@ public struct LrcClient {
     public func get(id: Int64) async throws -> LyricsRecord {
         try await request("get/\(id)")
     }
-
+    
     /// Search for lyrics records using keywords. This API returns an array of lyrics records that match the specified search condition(s).
     /// At least ONE of the two parameters, q OR track_name, must be present. If neither is provided, an empty array is returned.
     /// Note: This API currently returns a maximum of 20 results and does not support pagination. These limitations are subject to change in the future.
@@ -68,25 +71,20 @@ public struct LrcClient {
         artistName: String? = nil,
         albumName: String? = nil
     ) async throws -> [LyricsRecord] {
-
+        
         guard query?.isEmpty == false || trackName?.isEmpty == false else {
             throw ServerError.searchBothNil
         }
-        
         var queryItems: [URLQueryItem] = []
-        
         if let query {
             queryItems.append(.init(name: "q", value: query))
         }
-        
         if let trackName {
             queryItems.append(.init(name: "track_name", value: trackName))
         }
-        
         if let artistName {
             queryItems.append(.init(name: "artist_name", value: artistName))
         }
-        
         if let albumName {
             queryItems.append(.init(name: "album_name", value: albumName))
         }
@@ -109,25 +107,71 @@ public struct LrcClient {
             request.setValue(lrclibID, forHTTPHeaderField: "Lrclib-App-Id")
         }
         
-        // retry ---> todo
-        
-        let (data, response) = try await session.data(for: request)
-        
-        guard let response = response as? HTTPURLResponse else {
-            throw ServerError.invalidResponse
-        }
-        
-        guard (200..<300).contains(response.statusCode) else {
-            let retryAfter = response.value(forHTTPHeaderField: "Retry-After")
-            if let error = try? JSONDecoder().decode(LyricsError.self, from: data) {
-                throw ServerError.apiError(error, retryAfter: retryAfter)
+        for attempt in 1...maxAttempts {
+            let data: Data
+            let response: URLResponse
+            
+            do {
+                (data, response) = try await session.data(for: request)
+            } catch {
+                guard attempt < maxAttempts, shouldRetry(error) else {
+                    throw error
+                }
+                try await Task.sleep(for: .seconds(defaultRetryDelay * pow(2, Double(attempt - 1))))
+                continue
             }
-            throw ServerError.httpErrorCode(response.statusCode)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw ServerError.invalidResponse
+            }
+            
+            guard (200..<300).contains(httpResponse.statusCode) else {
+                let retryable = [429, 503].contains(httpResponse.statusCode)
+                guard retryable, attempt < maxAttempts else {
+                    let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After")
+                    if let error = try? JSONDecoder().decode(LyricsError.self, from: data) {
+                        throw ServerError.apiError(error, retryAfter: retryAfter)
+                    }
+                    throw ServerError.httpErrorCode(httpResponse.statusCode)
+                }
+                let delay = retryDelay(from: httpResponse, attempt: attempt)
+                try await Task.sleep(for: .seconds(delay))
+                continue
+            }
+            
+            return try JSONDecoder().decode(T.self, from: data)
         }
-        
-        return try JSONDecoder().decode(T.self, from: data)
+        throw ServerError.invalidResponse
     }
     
+    private func retryDelay(from response: HTTPURLResponse?, attempt: Int) -> TimeInterval {
+        if let value = response?.value(forHTTPHeaderField: "Retry-After") {
+            if let seconds = TimeInterval(value), seconds >= 0 {
+                return seconds
+            }
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+            if let date = formatter.date(from: value) {
+                return max(0, date.timeIntervalSinceNow)
+            }
+        }
+        return defaultRetryDelay * pow(2, Double(attempt - 1))
+    }
+    
+    private func shouldRetry(_ error: Error) -> Bool {
+        guard !Task.isCancelled, let error = error as? URLError else { return false }
+        return [
+            .timedOut,
+            .networkConnectionLost,
+            .notConnectedToInternet,
+            .cannotConnectToHost,
+            .cannotFindHost,
+            .dnsLookupFailed
+        ].contains(error.code)
+    }
+
 }
 
 /// server errors
