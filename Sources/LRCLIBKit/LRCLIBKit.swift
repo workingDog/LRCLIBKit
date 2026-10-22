@@ -1,7 +1,8 @@
 //
-//  LRCLIBKit.swift
+//  LrcClient.swift
+//  LRCLIBKit
 //
-//  Created by Ringo Wathelet on 2026/10/22.
+//  Created by Ringo Wathelet on 2026/10/23.
 //
 
 import Foundation
@@ -18,8 +19,8 @@ public struct LrcClient {
 
     public init(
         baseURL: URL = URL(string: "https://lrclib.net/api/")!,
-        lrclibID: String? = "uffDOEor4luWEl3ltIARG5BFdaw29uImqIKBTIHVBYY",
-        userAgent: String = "LRCLIBKit v0.1.0 (https://github.com/workingDog/LRCLIBKit)",
+        lrclibID: String? = nil,
+        userAgent: String = "LRCLIBKit v1.0.0 (https://github.com/workingDog/LRCLIBKit)",
         session: URLSession = .shared
     ) {
         self.baseURL = baseURL
@@ -37,6 +38,7 @@ public struct LrcClient {
         albumName: String? = nil,
         duration: UInt? = nil
     ) async throws -> LyricsRecord {
+        
         let endpoint = "get"
         var queryItems = [
             URLQueryItem(name: "track_name", value: trackName),
@@ -126,21 +128,6 @@ public struct LrcClient {
         return try JSONDecoder().decode(T.self, from: data)
     }
     
-}
-
-/// Every endpoint that returns lyrics records
-public struct LyricsRecord: Codable, Equatable, Identifiable, Hashable, Sendable {
-    public let id: Int64
-    public let name: String?
-    public let trackName: String?
-    public let artistName: String?
-    public let albumName: String?
-    public let duration: Double?
-    public let instrumental: Bool?
-    public let hasWordSync: Bool?
-    public let plainLyrics: String?
-    public let syncedLyrics: String?
-    public let lyricsfile: String?
 }
 
 /// server errors
