@@ -2,7 +2,7 @@
 
 A Swift client for the lyrics library [LRCLIB](https://lrclib.net/), **a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs.**
 
-
+Only caters for the **GET** API, not the experimental **POST** API.
 
 ## Example
 
