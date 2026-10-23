@@ -1,8 +1,8 @@
 #  LRCLIBKit
 
-A Swift client for the lyrics library [LRCLIB](https://lrclib.net/) "a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs."
+A Swift client for the lyrics library [LRCLIB](https://lrclib.net/), **a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs.**
 
-## Usage
+## Example
 
 
 ```swift
@@ -28,7 +28,7 @@ import LRCLIBKit
 
 ### Installation
 
-Include the file in the **./Sources/LRCLIBKit** folder into your project or preferably use **Swift Package Manager**.
+Include the files in the **./Sources/LRCLIBKit** folder into your project or preferably use **Swift Package Manager**.
 
 #### Swift Package Manager (SPM)
 
@@ -55,13 +55,5 @@ import LRCLIBKit
 
 -    [LRCLIB](https://lrclib.net/)
 
-
-## Todo
-
-Implement the **Retry-After**.
-
-When a limit is exceeded, the server responds with 429 Too Many Requests, a Retry-After header specifying how many seconds to wait, and a JSON body naming the limiting scope (ip or application):
-
-Your client must honor Retry-After. Wait at least the given number of seconds before retrying, and add a small random jitter (for example, up to 30% of the delay) so that many clients throttled at the same moment do not retry in a synchronized wave. Ignoring Retry-After and continuing to send requests may result in a temporary ban.
 
 
