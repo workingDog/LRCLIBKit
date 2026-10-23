@@ -35,7 +35,7 @@ public struct LrcClient {
     /// Attempt to find the best match of lyrics for the track. You must provide the track title and the artist name. Providing the album name and the track's duration in seconds is recommended and improves the matching precision.
     /// If no match is found, the API returns 404 Not Found. Missing tracks can be picked up by the background lyrics fetching service and may become available in a later request.
     /// Note: The provided duration is crucial. LRCLIB will attempt to provide the lyrics only when the duration matches the record in LRCLIB's database, or at least with a difference of ±2 seconds in duration.
-    public func get(
+    public func getLyrics(
         trackName: String,
         artistName: String,
         albumName: String? = nil,
@@ -58,7 +58,7 @@ public struct LrcClient {
     }
     
     /// Get a lyrics record by the track's absolute ID. Track IDs are returned by other APIs, such as /api/get and /api/search
-    public func get(id: Int64) async throws -> LyricsRecord {
+    public func getLyrics(id: Int64) async throws -> LyricsRecord {
         try await request("get/\(id)")
     }
     
