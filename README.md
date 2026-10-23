@@ -50,7 +50,7 @@ Create a Package.swift file for your project and add a dependency to:
 
 ```swift
 dependencies: [
-  .package(url: "https://github.com/workingDog/LRCLIBKit.git", branch: "main")
+    .package(url: "https://github.com/workingDog/LRCLIBKit.git", from: "1.0.1")
 ]
 ```
 
