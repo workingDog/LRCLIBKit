@@ -21,7 +21,7 @@ struct ContentView: View {
         .padding()
         .task {
             do {
-                lyrics = try await client.get(trackName: "Venus", artistName: "Bananarama")
+                lyrics = try await client.getLyrics(trackName: "Venus", artistName: "Bananarama")
                 print(lyrics?.plainLyrics ?? "No lyrics")
             } catch ServerError.apiError(let error,  _) {
                 switch error.statusCode {
