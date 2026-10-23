@@ -2,28 +2,42 @@
 
 A Swift client for the lyrics library [LRCLIB](https://lrclib.net/), **a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs.**
 
+
+
 ## Example
 
-
 ```swift
+import SwiftUI
 import LRCLIBKit
 
-        do {
-            let client = LrcClient()
-            let lyrics = try await client.get(trackName: "Venus", artistName: "Bananarama")
-            print(lyrics.plainLyrics ?? "No plain lyrics")
-        } catch ServerError.apiError(let error,  _) {
-            switch error.statusCode {
-                case 404: print("Lyrics not found")
-                case 429: print("Rate limit exceeded")
-                case 503: print("LRCLIB is temporarily overloaded")
-                default: print("\(error.name): \(error.message)")
-            }
-        } catch ServerError.httpErrorCode(let statusCode) {
-            print("HTTP error: \(statusCode)")
-        } catch {
-            print("Request failed: \(error.localizedDescription)")
+struct ContentView: View {
+    @State private var lyrics: LyricsRecord?
+    let client = LrcClient()
+    
+    var body: some View {
+        ScrollView {
+            Text(lyrics?.plainLyrics ?? "No lyrics")
         }
+        .padding()
+        .task {
+            do {
+                lyrics = try await client.get(trackName: "Venus", artistName: "Bananarama")
+                print(lyrics?.plainLyrics ?? "No lyrics")
+            } catch ServerError.apiError(let error,  _) {
+                switch error.statusCode {
+                    case 404: print("Lyrics not found")
+                    case 429: print("Rate limit exceeded")
+                    case 503: print("LRCLIB is temporarily overloaded")
+                    default: print("\(error.name): \(error.message)")
+                }
+            } catch ServerError.httpErrorCode(let statusCode) {
+                print("HTTP error: \(statusCode)")
+            } catch {
+                print("Request failed: \(error.localizedDescription)")
+            }
+        }
+    }
+}
 ```
 
 ### Installation
