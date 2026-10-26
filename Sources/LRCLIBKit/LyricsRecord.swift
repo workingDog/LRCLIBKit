@@ -5,7 +5,6 @@
 //  Created by Ringo Wathelet on 2026/10/23.
 //
 import Foundation
-import SwiftUI
 
 
 /// For every endpoint that returns a lyrics record
@@ -36,7 +35,7 @@ public struct Metadata: Codable {
     public let album: String
     public let durationMs: Int
     public let instrumental: Bool
-
+    
     enum CodingKeys: String, CodingKey {
         case title, artist, album, instrumental
         case durationMs = "duration_ms"
@@ -50,7 +49,7 @@ public struct LyricLine: Codable, Identifiable,Sendable {
     public let startMs: Int
     public let endMs: Int?
     public let words: [LyricWord]?
-
+    
     enum CodingKeys: String, CodingKey {
         case text, words
         case startMs = "start_ms"
@@ -63,8 +62,8 @@ public struct LyricWord: Codable, Identifiable, Sendable {
     
     public let text: String
     public let startMs: Int
-    public let endMs: Int?  // <---
-
+    public let endMs: Int?
+    
     enum CodingKeys: String, CodingKey {
         case text
         case startMs = "start_ms"
@@ -72,10 +71,72 @@ public struct LyricWord: Codable, Identifiable, Sendable {
     }
 }
 
+///
+/// basic LRC format
+///
+
 public struct LRCFile {
     public var metadata: LRCMetadata
     public var lines: [LRCLine]
     public var offsetMs: Int
+}
+
+extension LRCFile {
+    
+    public init(syncedLyrics: String) {
+        var metadata = LRCMetadata()
+        var lines: [LRCLine] = []
+        var offsetMs = 0
+        var sequence = 0
+        
+        let timestampRegex = /\[(\d+):(\d{1,2})(?:[.,](\d{1,3}))?\]/
+        let metadataRegex = /^\[(\w+):([^\]]*)\]$/
+        
+        for rawLine in syncedLyrics.components(separatedBy: .newlines) {
+            var text = rawLine
+            var timestamps: [Int] = []
+            
+            for match in rawLine.matches(of: timestampRegex).reversed() {
+                guard let minutes = Int(match.1), let seconds = Int(match.2), seconds < 60 else { continue }
+                let fractionString = String(match.3 ?? "")
+                let milliseconds = Int(fractionString.padding(toLength: 3, withPad: "0", startingAt: 0)) ?? 0
+                timestamps.append((minutes * 60 + seconds) * 1000 + milliseconds)
+                text.replaceSubrange(match.range, with: "")
+            }
+            
+            if timestamps.isEmpty {
+                let trimmed = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let match = trimmed.wholeMatch(of: metadataRegex) {
+                    let key = String(match.1).lowercased()
+                    let value = String(match.2)
+                    switch key {
+                        case "ti": metadata.title = value
+                        case "ar": metadata.artist = value
+                        case "al": metadata.album = value
+                        case "by": metadata.by = value
+                        case "offset": offsetMs = Int(value) ?? 0
+                        default: break
+                    }
+                }
+                continue
+            }
+            let lyricText = text.trimmingCharacters(in: .whitespaces)
+            for timestamp in timestamps.reversed() {
+                lines.append(LRCLine(startMs: timestamp, text: lyricText, words: nil))
+                sequence += 1
+            }
+        }
+        self.metadata = metadata
+        self.lines = lines.enumerated()
+            .sorted { lhs, rhs in
+                lhs.element.startMs == rhs.element.startMs
+                ? lhs.offset < rhs.offset
+                : lhs.element.startMs < rhs.element.startMs
+            }
+            .map(\.element)
+        self.offsetMs = offsetMs
+    }
+    
 }
 
 public struct LRCMetadata {
@@ -85,72 +146,20 @@ public struct LRCMetadata {
     public var by: String?
 }
 
-public struct LRCLine: Codable, Identifiable, Sendable {
+public struct LRCLine: Identifiable, Sendable {
     public let id = UUID()
     
     /// Timestamp in milliseconds from the start of the track.
     public var startMs: Int
     public var text: String
     public var words: [LRCWord]?
-    
-    enum CodingKeys: String, CodingKey {
-        case startMs, text, words
-    }
 }
 
-public struct LRCWord: Codable, Identifiable, Sendable {
+public struct LRCWord: Identifiable, Sendable {
     public let id = UUID()
     
     /// Timestamp in milliseconds from the start of the track.
     public var startMs: Int
     public var text: String
-    
-    enum CodingKeys: String, CodingKey {
-        case startMs, text
-    }
 }
 
-extension LRCFile {
-
-    public init(syncedLyrics: String) {
-        var metadata = LRCMetadata()
-        var lines: [LRCLine] = []
-        var offsetMs = 0
-        let timestampRegex = /\[(\d{2,}):(\d{2})(?:\.(\d{1,3}))?\]/
-        
-        for rawLine in syncedLyrics.components(separatedBy: .newlines) {
-            var text = rawLine
-            var timestamps: [Int] = []
-            
-            for match in rawLine.matches(of: timestampRegex).reversed() {
-                let minutes = Int(match.1) ?? 0
-                let seconds = Int(match.2) ?? 0
-                let fraction = Int(String(match.3 ?? "").padding(toLength: 3, withPad: "0", startingAt: 0)) ?? 0
-                timestamps.append((minutes * 60 + seconds) * 1000 + fraction)
-                text.replaceSubrange(match.range, with: "")
-            }
-            
-            if timestamps.isEmpty {
-                if rawLine.hasPrefix("[ti:") {
-                    metadata.title = String(rawLine.dropFirst(4).dropLast())
-                } else if rawLine.hasPrefix("[ar:") {
-                    metadata.artist = String(rawLine.dropFirst(4).dropLast())
-                } else if rawLine.hasPrefix("[al:") {
-                    metadata.album = String(rawLine.dropFirst(4).dropLast())
-                } else if rawLine.hasPrefix("[by:") {
-                    metadata.by = String(rawLine.dropFirst(4).dropLast())
-                } else if rawLine.hasPrefix("[offset:") {
-                    offsetMs = Int(rawLine.dropFirst(8).dropLast()) ?? 0
-                }
-                continue
-            }
-            let lyricText = text.trimmingCharacters(in: .whitespaces)
-            for timestamp in timestamps {
-                lines.append(LRCLine(startMs: timestamp, text: lyricText, words: nil))
-            }
-        }
-        self.metadata = metadata
-        self.lines = lines.sorted { $0.startMs < $1.startMs }
-        self.offsetMs = offsetMs
-    }
-}
