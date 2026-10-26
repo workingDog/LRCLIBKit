@@ -43,7 +43,9 @@ public struct Metadata: Codable {
     }
 }
 
-public struct LyricLine: Codable {
+public struct LyricLine: Codable, Identifiable,Sendable {
+    public let id = UUID()
+    
     public let text: String
     public let startMs: Int
     public let endMs: Int?
@@ -56,7 +58,9 @@ public struct LyricLine: Codable {
     }
 }
 
-public struct LyricWord: Codable {
+public struct LyricWord: Codable, Identifiable, Sendable {
+    public let id = UUID()
+    
     public let text: String
     public let startMs: Int
     public let endMs: Int?  // <---
@@ -81,17 +85,29 @@ public struct LRCMetadata {
     public var by: String?
 }
 
-public struct LRCLine {
+public struct LRCLine: Codable, Identifiable, Sendable {
+    public let id = UUID()
+    
     /// Timestamp in milliseconds from the start of the track.
     public var startMs: Int
     public var text: String
     public var words: [LRCWord]?
+    
+    enum CodingKeys: String, CodingKey {
+        case startMs, text, words
+    }
 }
 
-public struct LRCWord {
+public struct LRCWord: Codable, Identifiable, Sendable {
+    public let id = UUID()
+    
     /// Timestamp in milliseconds from the start of the track.
     public var startMs: Int
     public var text: String
+    
+    enum CodingKeys: String, CodingKey {
+        case startMs, text
+    }
 }
 
 extension LRCFile {
