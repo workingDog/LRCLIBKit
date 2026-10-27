@@ -45,8 +45,8 @@ To obtain the LRC format data of the lyrics use:
 
 
 ```swift
-        if let theSyncedLyrics = lyrics?.syncedLyrics {
-            let lrcFile = LRCFile(syncedLyrics: theSyncedLyrics)
+        if let syncedLyricsString = lyrics?.syncedLyrics {
+            let lrcFile = LRCFile(syncedLyrics: syncedLyricsString)
         }
 ```
 
