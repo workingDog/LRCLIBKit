@@ -45,9 +45,9 @@ To obtain the LRC format data of the lyrics use:
 
 
 ```swift
-        if let syncedLyricsString = lyrics?.syncedLyrics {
-            let lrcFile = LRCFile(syncedLyrics: syncedLyricsString)
-        }
+    if let syncedLyricsString = lyrics?.syncedLyrics {
+        let lrcFile = LRCFile(syncedLyrics: syncedLyricsString)
+    }
 ```
 
 
@@ -55,13 +55,13 @@ To obtain the YAML LyricsFile format data use:
 
 
 ```swift
-         if let lyricsfileString = lyrics?.lyricsfile {
-             do {
-                 let lyricsfile: LyricsFile? = try decoder.decode(LyricsFile.self, from: lyricsfileString)
-             } catch  {
-                 print(error)
-             }
-         }
+    if let lyricsfileString = lyrics?.lyricsfile {
+        do {
+            let lyricsfile: LyricsFile? = try decoder.decode(LyricsFile.self, from: lyricsfileString)
+        } catch  {
+            print(error)
+        }
+    }
 ```
 
 where **decoder** is a YAML decoder, such as [YAMLDecoder](https://github.com/jpsim/Yams). 
@@ -77,7 +77,7 @@ Create a Package.swift file for your project and add a dependency to:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/workingDog/LRCLIBKit.git", from: "1.0.1")
+    .package(url: "https://github.com/workingDog/LRCLIBKit.git", from: "1.1.0")
 ]
 ```
 
