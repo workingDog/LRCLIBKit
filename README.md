@@ -1,8 +1,9 @@
 #  LRCLIBKit
 
-A Swift client for the lyrics library [LRCLIB](https://lrclib.net/), **a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs.**
+A very small Swift client for the lyrics library [LRCLIB](https://lrclib.net/), **"a completely free service for finding and contributing synchronized lyrics, with an easy-to-use and machine-friendly APIs."**
 
 Only caters for the **GET** API, not the experimental **POST** API.
+
 
 ## Example
 
@@ -40,6 +41,32 @@ struct ContentView: View {
 }
 ```
 
+To obtain the LRC format data of the lyrics use:
+
+
+```swift
+        if let theSyncedLyrics = lyrics?.syncedLyrics {
+            let lrcFile = LRCFile(syncedLyrics: theSyncedLyrics)
+        }
+```
+
+
+To obtain the YAML LyricsFile format data use:
+
+
+```swift
+         if let lyricsfileString = lyrics?.lyricsfile {
+             do {
+                 let lyricsfile: LyricsFile? = try decoder.decode(LyricsFile.self, from: lyricsfileString)
+             } catch  {
+                 print(error)
+             }
+         }
+```
+
+where **decoder** is a YAML decoder, such as [YAMLDecoder](https://github.com/jpsim/Yams). 
+
+
 ### Installation
 
 Include the files in the **./Sources/LRCLIBKit** folder into your project or preferably use **Swift Package Manager**.
@@ -68,6 +95,4 @@ import LRCLIBKit
 ### References
 
 -    [LRCLIB](https://lrclib.net/)
-
-
 
