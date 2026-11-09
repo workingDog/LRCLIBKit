@@ -20,6 +20,20 @@ public struct LyricsRecord: Codable, Equatable, Identifiable, Hashable, Sendable
     public let plainLyrics: String?
     public let syncedLyrics: String?
     public let lyricsfile: String?
+    
+    public init(id: Int64, name: String?, trackName: String?, artistName: String?, albumName: String?, duration: Double?, instrumental: Bool?, hasWordSync: Bool?, plainLyrics: String?, syncedLyrics: String?, lyricsfile: String?) {
+        self.id = id
+        self.name = name
+        self.trackName = trackName
+        self.artistName = artistName
+        self.albumName = albumName
+        self.duration = duration
+        self.instrumental = instrumental
+        self.hasWordSync = hasWordSync
+        self.plainLyrics = plainLyrics
+        self.syncedLyrics = syncedLyrics
+        self.lyricsfile = lyricsfile
+    }
 }
 
 public struct LyricsFile: Codable {
@@ -27,6 +41,13 @@ public struct LyricsFile: Codable {
     public let metadata: Metadata
     public let lines: [LyricLine]
     public let plain: String
+    
+    public init(version: String, metadata: Metadata, lines: [LyricLine], plain: String) {
+        self.version = version
+        self.metadata = metadata
+        self.lines = lines
+        self.plain = plain
+    }
 }
 
 public struct Metadata: Codable {
@@ -39,6 +60,14 @@ public struct Metadata: Codable {
     enum CodingKeys: String, CodingKey {
         case title, artist, album, instrumental
         case durationMs = "duration_ms"
+    }
+    
+    public init(title: String, artist: String, album: String, durationMs: Int, instrumental: Bool) {
+        self.title = title
+        self.artist = artist
+        self.album = album
+        self.durationMs = durationMs
+        self.instrumental = instrumental
     }
 }
 
@@ -55,6 +84,13 @@ public struct LyricLine: Codable, Identifiable,Sendable {
         case startMs = "start_ms"
         case endMs = "end_ms"
     }
+    
+    public init(text: String, startMs: Int, endMs: Int?, words: [LyricWord]?) {
+        self.text = text
+        self.startMs = startMs
+        self.endMs = endMs
+        self.words = words
+    }
 }
 
 public struct LyricWord: Codable, Identifiable, Sendable {
@@ -69,6 +105,12 @@ public struct LyricWord: Codable, Identifiable, Sendable {
         case startMs = "start_ms"
         case endMs = "end_ms"
     }
+    
+    public init(text: String, startMs: Int, endMs: Int?) {
+        self.text = text
+        self.startMs = startMs
+        self.endMs = endMs
+    }
 }
 
 ///
@@ -79,6 +121,12 @@ public struct LRCFile {
     public var metadata: LRCMetadata
     public var lines: [LRCLine]
     public var offsetMs: Int
+    
+    public init(metadata: LRCMetadata, lines: [LRCLine], offsetMs: Int) {
+        self.metadata = metadata
+        self.lines = lines
+        self.offsetMs = offsetMs
+    }
 }
 
 extension LRCFile {
@@ -144,6 +192,13 @@ public struct LRCMetadata {
     public var artist: String?
     public var album: String?
     public var by: String?
+    
+    public init(title: String? = nil, artist: String? = nil, album: String? = nil, by: String? = nil) {
+        self.title = title
+        self.artist = artist
+        self.album = album
+        self.by = by
+    }
 }
 
 public struct LRCLine: Identifiable, Sendable {
@@ -153,6 +208,12 @@ public struct LRCLine: Identifiable, Sendable {
     public var startMs: Int
     public var text: String
     public var words: [LRCWord]?
+    
+    public init(startMs: Int, text: String, words: [LRCWord]? = nil) {
+        self.startMs = startMs
+        self.text = text
+        self.words = words
+    }
 }
 
 public struct LRCWord: Identifiable, Sendable {
@@ -161,5 +222,10 @@ public struct LRCWord: Identifiable, Sendable {
     /// Timestamp in milliseconds from the start of the track.
     public var startMs: Int
     public var text: String
+    
+    public init(startMs: Int, text: String) {
+        self.startMs = startMs
+        self.text = text
+    }
 }
 

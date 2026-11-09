@@ -187,4 +187,10 @@ public struct LyricsError: Codable, Sendable, Equatable {
     public let statusCode: Int
     public let name: String
     public let message: String
+    
+    public init(statusCode: Int, name: String, message: String) {
+        self.statusCode = statusCode
+        self.name = name
+        self.message = message
+    }
 }
