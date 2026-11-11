@@ -12,13 +12,13 @@ import Foundation
 /// see the documentations at:  https://lrclib.net/docs
 ///
 public struct LrcClient {
-    private let baseURL: URL
-    private let lrclibID: String?
-    private let userAgent: String
-    private let session: URLSession
+    public let baseURL: URL
+    public let lrclibID: String?
+    public let userAgent: String
+    public let session: URLSession
     
-    private let maxAttempts = 3
-    private let defaultRetryDelay: TimeInterval = 1
+    public let maxAttempts = 3
+    public let defaultRetryDelay: TimeInterval = 1
     
     public init(
         baseURL: URL = URL(string: "https://lrclib.net/api/")!,
