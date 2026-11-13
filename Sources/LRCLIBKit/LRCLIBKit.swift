@@ -71,10 +71,12 @@ public struct LrcClient {
         artistName: String? = nil,
         albumName: String? = nil
     ) async throws -> [LyricsRecord] {
-        
-        guard query?.isEmpty == false || trackName?.isEmpty == false else {
+
+        guard query?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ||
+              trackName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else {
             throw ServerError.searchBothNil
         }
+        
         var queryItems: [URLQueryItem] = []
         if let query {
             queryItems.append(.init(name: "q", value: query))
@@ -194,3 +196,71 @@ public struct LyricsError: Codable, Sendable, Equatable {
         self.message = message
     }
 }
+
+
+/*
+ 
+ import CryptoKit
+ import Foundation
+
+ func verifyNonce(_ result: [UInt8], target: [UInt8]) -> Bool {
+     guard result.count == target.count else { return false }
+     for (resultByte, targetByte) in zip(result, target) {
+         if resultByte > targetByte { return false }
+         if resultByte < targetByte { return true }
+     }
+     return true
+ }
+
+ func solveChallenge(prefix: String, targetHex: String) throws -> String {
+     guard let targetData = Data(strictHex: targetHex) else {
+         throw ChallengeError.invalidTarget
+     }
+     let target = Array(targetData)
+     var nonce: UInt64 = 0
+     while true {
+         let input = "\(prefix)\(nonce)"
+         let digest = SHA256.hash(data: Data(input.utf8))
+         let hashed = Array(digest)
+         if verifyNonce(hashed, target: target) {
+             return String(nonce)
+         }
+         nonce += 1
+     }
+ }
+
+ enum ChallengeError: Error {
+     case invalidTarget
+ }
+
+ extension Data {
+     init?(strictHex: String) {
+         guard strictHex.count.isMultiple(of: 2) else { return nil }
+         var data = Data()
+         var index = strictHex.startIndex
+         while index < strictHex.endIndex {
+             let nextIndex = strictHex.index(index, offsetBy: 2)
+             guard let byte = UInt8(strictHex[index..<nextIndex], radix: 16) else {
+                 return nil
+             }
+             data.append(byte)
+             index = nextIndex
+         }
+         self = data
+     }
+ }
+ 
+ 
+ Usage:
+ 
+ do {
+     let nonce = try solveChallenge(
+         prefix: "your-prefix",
+         targetHex: "00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+     )
+     print("Nonce:", nonce)
+ } catch {
+     print("Invalid target")
+ }
+ 
+ */
